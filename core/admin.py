@@ -30,9 +30,9 @@ class SubproductAdmin(admin.ModelAdmin):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('invoice_no', 'date', 'party', 'product', 'subproduct', 'basic_amount', 'fiscal_year')
+    list_display = ('voucher_no', 'date', 'party', 'product', 'subproduct', 'basic_amount', 'fiscal_year')
     list_filter = ('fiscal_year', 'month', 'product')
-    search_fields = ('invoice_no', 'party__name')
+    search_fields = ('voucher_no', 'party__name')
     date_hierarchy = 'date'
 
 

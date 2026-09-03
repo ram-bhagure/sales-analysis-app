@@ -38,17 +38,20 @@ class Subproduct(models.Model):
 
 
 class Invoice(models.Model):
-    """One row per invoice line item, as uploaded from the monthly workbook."""
-    invoice_no = models.CharField(max_length=100)
+    """One row per invoice line item, as uploaded from the monthly workbook.
+    Source Excel headers: Date, Voucher No, Company (=warehouse), Party Name,
+    Code (=Product name), Product Code (=Subproduct name), Bundles (=units),
+    Basic, State, City, Executive."""
+    voucher_no = models.CharField(max_length=100)
     date = models.DateField()
     month = models.PositiveSmallIntegerField()   # derived from date, 1-12
     fiscal_year = models.CharField(max_length=9)  # e.g. "2026-2027"
-    warehouse = models.CharField(max_length=150, blank=True)
+    warehouse = models.CharField(max_length=150, blank=True)  # from "Company" column
     party = models.ForeignKey(Party, on_delete=models.PROTECT, related_name='invoices')
-    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='invoices')
-    subproduct = models.ForeignKey(Subproduct, on_delete=models.PROTECT, related_name='invoices', null=True, blank=True)
-    units = models.DecimalField(max_digits=12, decimal_places=2)
-    basic_amount = models.DecimalField(max_digits=14, decimal_places=2)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='invoices')  # from "Code" column
+    subproduct = models.ForeignKey(Subproduct, on_delete=models.PROTECT, related_name='invoices', null=True, blank=True)  # from "Product Code" column
+    units = models.DecimalField(max_digits=12, decimal_places=2)  # from "Bundles" column
+    basic_amount = models.DecimalField(max_digits=14, decimal_places=2)  # from "Basic" column
 
     class Meta:
         indexes = [
@@ -56,7 +59,7 @@ class Invoice(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.invoice_no} - {self.party.name}"
+        return f"{self.voucher_no} - {self.party.name}"
 
 
 class MOU(models.Model):
