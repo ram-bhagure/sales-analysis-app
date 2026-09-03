@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Monthly Workbook</title>
+</head>
+<body>
+    <h1>Upload Monthly Workbook</h1>
+
+    {% if error %}
+        <p style="color: red;">Error: {{ error }}</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if preview %}
+        <h2>Invoice sheet</h2>
+        <p>Columns: {{ preview.invoice_columns }}</p>
+        <p>Row count: {{ preview.invoice_row_count }}</p>
+        {{ preview.invoice_head|safe }}
+
+        <h2>MOU sheet</h2>
+        <p>Columns: {{ preview.mou_columns }}</p>
+        <p>Row count: {{ preview.mou_row_count }}</p>
+        {{ preview.mou_head|safe }}
+    {% endif %}
+</body>
+</html>
