@@ -16,16 +16,11 @@
         <button type="submit">Upload</button>
     </form>
 
-    {% if preview %}
-        <h2>Invoice sheet</h2>
-        <p>Columns: {{ preview.invoice_columns }}</p>
-        <p>Row count: {{ preview.invoice_row_count }}</p>
-        {{ preview.invoice_head|safe }}
-
-        <h2>MOU sheet</h2>
-        <p>Columns: {{ preview.mou_columns }}</p>
-        <p>Row count: {{ preview.mou_row_count }}</p>
-        {{ preview.mou_head|safe }}
+    {% if result %}
+        <h2>Upload successful</h2>
+        <p>Fiscal Year: {{ result.fiscal_year }}</p>
+        <p>Invoice rows saved: {{ result.invoice_rows_saved }}</p>
+        <p>MOU rows seen (not yet saved): {{ result.mou_rows_seen }}</p>
     {% endif %}
 </body>
 </html>

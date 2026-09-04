@@ -1,10 +1,12 @@
 import pandas as pd
 from django.shortcuts import render
 from .forms import WorkbookUploadForm
+from .models import UploadHistory
+from .services import get_fiscal_year, save_invoices
 
 
 def upload_workbook(request):
-    preview = None
+    result = None
     error = None
 
     if request.method == 'POST':
@@ -15,21 +17,39 @@ def upload_workbook(request):
                 invoice_df = pd.read_excel(workbook_file, sheet_name='Invoice')
                 mou_df = pd.read_excel(workbook_file, sheet_name='MOU')
 
-                preview = {
-                    'invoice_columns': list(invoice_df.columns),
-                    'invoice_row_count': len(invoice_df),
-                    'invoice_head': invoice_df.head(5).to_html(),
-                    'mou_columns': list(mou_df.columns),
-                    'mou_row_count': len(mou_df),
-                    'mou_head': mou_df.head(5).to_html(),
+                first_date = pd.to_datetime(invoice_df['Date'].iloc[0]).date()
+                fiscal_year = get_fiscal_year(first_date)
+
+                invoice_rows_saved = save_invoices(invoice_df, fiscal_year)
+
+                UploadHistory.objects.create(
+                    uploaded_by=request.user if request.user.is_authenticated else None,
+                    filename=workbook_file.name,
+                    fiscal_year=fiscal_year,
+                    status='success',
+                    invoice_rows_processed=invoice_rows_saved,
+                    mou_rows_processed=0,  # will fill in once MOU saving is built
+                )
+
+                result = {
+                    'fiscal_year': fiscal_year,
+                    'invoice_rows_saved': invoice_rows_saved,
+                    'mou_rows_seen': len(mou_df),
                 }
             except Exception as e:
                 error = str(e)
+                UploadHistory.objects.create(
+                    uploaded_by=request.user if request.user.is_authenticated else None,
+                    filename=workbook_file.name,
+                    fiscal_year='',
+                    status='failed',
+                    error_message=str(e),
+                )
     else:
         form = WorkbookUploadForm()
 
     return render(request, 'data_ingestion/upload.html', {
         'form': form,
-        'preview': preview,
+        'result': result,
         'error': error,
     })
