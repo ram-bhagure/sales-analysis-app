@@ -2,7 +2,7 @@ import pandas as pd
 from django.shortcuts import render
 from .forms import WorkbookUploadForm
 from .models import UploadHistory
-from .services import get_fiscal_year, save_invoices
+from .services import get_fiscal_year, save_invoices, save_mou
 
 
 def upload_workbook(request):
@@ -21,20 +21,26 @@ def upload_workbook(request):
                 fiscal_year = get_fiscal_year(first_date)
 
                 invoice_rows_saved = save_invoices(invoice_df, fiscal_year)
+                mou_rows_saved, mismatch_notes = save_mou(mou_df, fiscal_year)
+
+                status = 'partial' if mismatch_notes else 'success'
 
                 UploadHistory.objects.create(
                     uploaded_by=request.user if request.user.is_authenticated else None,
                     filename=workbook_file.name,
                     fiscal_year=fiscal_year,
-                    status='success',
+                    status=status,
                     invoice_rows_processed=invoice_rows_saved,
-                    mou_rows_processed=0,  # will fill in once MOU saving is built
+                    mou_rows_processed=mou_rows_saved,
+                    reconciliation_mismatches=len(mismatch_notes),
+                    notes='\n'.join(mismatch_notes),
                 )
 
                 result = {
                     'fiscal_year': fiscal_year,
                     'invoice_rows_saved': invoice_rows_saved,
-                    'mou_rows_seen': len(mou_df),
+                    'mou_rows_saved': mou_rows_saved,
+                    'mismatch_notes': mismatch_notes,
                 }
             except Exception as e:
                 error = str(e)

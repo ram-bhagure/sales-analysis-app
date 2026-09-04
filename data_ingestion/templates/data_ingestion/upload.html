@@ -20,7 +20,16 @@
         <h2>Upload successful</h2>
         <p>Fiscal Year: {{ result.fiscal_year }}</p>
         <p>Invoice rows saved: {{ result.invoice_rows_saved }}</p>
-        <p>MOU rows seen (not yet saved): {{ result.mou_rows_seen }}</p>
+        <p>MOU rows saved: {{ result.mou_rows_saved }}</p>
+
+        {% if result.mismatch_notes %}
+            <h3 style="color: darkorange;">Notes / Mismatches ({{ result.mismatch_notes|length }})</h3>
+            <ul>
+                {% for note in result.mismatch_notes %}
+                    <li>{{ note }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     {% endif %}
 </body>
 </html>
