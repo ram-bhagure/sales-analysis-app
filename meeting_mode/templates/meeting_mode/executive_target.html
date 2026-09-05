@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Meeting Mode - {{ state_name }} (Target Review)</title>
+    <title>Meeting Mode - {{ executive_name }} (Target Review)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
@@ -10,17 +10,14 @@
         .tile-label { font-size: 13px; color: #666; }
         .tile-value { font-size: 26px; font-weight: bold; margin-top: 6px; }
         .chart-container { max-width: 700px; height: 300px; margin-bottom: 30px; }
-        .state-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-        .state-tile {
-            border: 1px solid #ccc; border-radius: 8px; padding: 14px;
-            min-width: 140px; text-align: left; cursor: pointer; background: #fafafa;
-        }
-        .state-tile:hover { background: #f0f0f0; }
+        table { border-collapse: collapse; width: 100%; max-width: 800px; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 14px; }
+        th { background: #f5f5f5; }
     </style>
 </head>
 <body>
     <p><a href="{% url 'meeting_all_india_target' %}">&larr; All India</a></p>
-    <h1>Meeting Mode &mdash; {{ state_name }}</h1>
+    <h1>Meeting Mode &mdash; {{ executive_name }}</h1>
     <p>Stream: Target Review &middot; Fiscal Year: {{ fiscal_year }}</p>
     {% if selected_month_label %}
         <p>Filtered to: <strong>{{ selected_month_label }}</strong> &middot; <a href="?">Clear filter</a></p>
@@ -28,11 +25,11 @@
 
     <div class="tiles">
         <div class="tile">
-            <div class="tile-label">{{ state_name }} Target</div>
+            <div class="tile-label">Target</div>
             <div class="tile-value">₹{{ total_target|floatformat:0 }}</div>
         </div>
         <div class="tile">
-            <div class="tile-label">{{ state_name }} Achievement</div>
+            <div class="tile-label">Achievement</div>
             <div class="tile-value">₹{{ total_achievement|floatformat:0 }}</div>
         </div>
         <div class="tile">
@@ -41,21 +38,7 @@
         </div>
     </div>
 
-    <h2>Select an executive to drill down</h2>
-    <div class="state-grid">
-        {% for exec in executive_tiles %}
-            <a href="{% url 'meeting_executive_target' exec.name %}" style="text-decoration: none; color: inherit;">
-                <div class="state-tile">
-                    <div class="tile-label">{{ exec.name }}</div>
-                    <div class="tile-value">{{ exec.percent }}%</div>
-                </div>
-            </a>
-        {% empty %}
-            <p>No executives found for this state.</p>
-        {% endfor %}
-    </div>
-
-    <div style="display: flex; gap: 30px; margin-top: 30px;">
+    <div style="display: flex; gap: 30px;">
         <div>
             <h2>Monthly Target vs Achievement (click a point to filter)</h2>
             <div class="chart-container">
@@ -69,6 +52,37 @@
             </div>
         </div>
     </div>
+
+    <h2>Parties &mdash; sorted by % achieved</h2>
+    <div class="chart-container" style="max-width: 800px;">
+        <canvas id="partiesChart"></canvas>
+    </div>
+
+    <h2>Party detail</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Party</th>
+                <th>City</th>
+                <th>Target</th>
+                <th>Achievement</th>
+                <th>% Achieved</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in party_rows %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.city }}</td>
+                    <td>₹{{ row.target|floatformat:0 }}</td>
+                    <td>₹{{ row.achievement|floatformat:0 }}</td>
+                    <td>{{ row.percent }}%</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5">No parties found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <script>
         new Chart(document.getElementById('trendChart'), {
@@ -97,6 +111,21 @@
             data: {
                 labels: {{ product_labels|safe }},
                 datasets: [{ data: {{ product_values|safe }}, backgroundColor: ['#2a78d6', '#5aa3e8', '#a8cef2', '#d8e8fa', '#f0c987'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        new Chart(document.getElementById('partiesChart'), {
+            data: {
+                labels: {{ party_names|safe }},
+                datasets: [
+                    { type: 'bar', label: 'Achievement', data: {{ party_achievements|safe }}, backgroundColor: '#2a78d6' },
+                    {
+                        type: 'scatter', label: 'Target',
+                        data: {{ party_names|safe }}.map((name, i) => ({ x: name, y: {{ party_targets|safe }}[i] })),
+                        backgroundColor: '#888', pointStyle: 'line', pointRadius: 10, borderWidth: 2
+                    }
+                ]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
