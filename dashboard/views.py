@@ -37,6 +37,16 @@ def management_dashboard(request):
         ).aggregate(total=Sum('basic_amount'))['total'] or 0
         monthly_achievement.append(float(invoice_sum))
 
+    # Product mix: sum basic_amount grouped by product name
+    product_totals = (
+        Invoice.objects.filter(party__in=parties, fiscal_year=fiscal_year)
+        .values('product__name')
+        .annotate(total=Sum('basic_amount'))
+        .order_by('-total')
+    )
+    product_labels = [row['product__name'] for row in product_totals]
+    product_values = [float(row['total']) for row in product_totals]
+
     context = {
         'fiscal_year': fiscal_year,
         'total_target': total_target,
@@ -45,5 +55,7 @@ def management_dashboard(request):
         'month_labels': MONTH_LABELS,
         'monthly_target': monthly_target,
         'monthly_achievement': monthly_achievement,
+        'product_labels': product_labels,
+        'product_values': product_values,
     }
     return render(request, 'dashboard/management.html', context)

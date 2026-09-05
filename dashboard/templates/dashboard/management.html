@@ -36,6 +36,11 @@
         <canvas id="trendChart"></canvas>
     </div>
 
+    <h2>Product Mix</h2>
+    <div class="chart-container" style="max-width: 400px;">
+        <canvas id="productChart"></canvas>
+    </div>
+
     <script>
         const ctx = document.getElementById('trendChart');
         new Chart(ctx, {
@@ -57,6 +62,22 @@
                         borderWidth: 2,
                     }
                 ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            }
+        });
+
+        const productCtx = document.getElementById('productChart');
+        new Chart(productCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ product_labels|safe }},
+                datasets: [{
+                    data: {{ product_values|safe }},
+                    backgroundColor: ['#2a78d6', '#5aa3e8', '#a8cef2', '#d8e8fa', '#f0c987', '#e8a05a'],
+                }]
             },
             options: {
                 responsive: true,
