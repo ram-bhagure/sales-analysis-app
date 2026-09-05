@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'core',
     'data_ingestion',
     'accounts',
-    'dashboard'
+    'dashboard',
+    'meeting_mode'
 ]
 
 MIDDLEWARE = [
