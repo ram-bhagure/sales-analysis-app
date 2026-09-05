@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Meeting Mode - All India (Target Review)</title>
+    <title>Meeting Mode - {{ state_name }} (Target Review)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
@@ -19,21 +19,20 @@
     </style>
 </head>
 <body>
-    <h1>Meeting Mode &mdash; All India</h1>
+    <p><a href="{% url 'meeting_all_india_target' %}">&larr; All India</a></p>
+    <h1>Meeting Mode &mdash; {{ state_name }}</h1>
     <p>Stream: Target Review &middot; Fiscal Year: {{ fiscal_year }}</p>
     {% if selected_month_label %}
         <p>Filtered to: <strong>{{ selected_month_label }}</strong> &middot; <a href="?">Clear filter</a></p>
-    {% else %}
-        <p>Showing: <strong>Full year</strong> &middot; click a point on the chart below to filter by month</p>
     {% endif %}
 
     <div class="tiles">
         <div class="tile">
-            <div class="tile-label">Target</div>
+            <div class="tile-label">{{ state_name }} Target</div>
             <div class="tile-value">₹{{ total_target|floatformat:0 }}</div>
         </div>
         <div class="tile">
-            <div class="tile-label">Achievement</div>
+            <div class="tile-label">{{ state_name }} Achievement</div>
             <div class="tile-value">₹{{ total_achievement|floatformat:0 }}</div>
         </div>
         <div class="tile">
@@ -42,7 +41,19 @@
         </div>
     </div>
 
-    <div style="display: flex; gap: 30px;">
+    <h2>Select an executive to drill down</h2>
+    <div class="state-grid">
+        {% for exec in executive_tiles %}
+            <div class="state-tile">
+                <div class="tile-label">{{ exec.name }}</div>
+                <div class="tile-value">{{ exec.percent }}%</div>
+            </div>
+        {% empty %}
+            <p>No executives found for this state.</p>
+        {% endfor %}
+    </div>
+
+    <div style="display: flex; gap: 30px; margin-top: 30px;">
         <div>
             <h2>Monthly Target vs Achievement (click a point to filter)</h2>
             <div class="chart-container">
@@ -57,22 +68,8 @@
         </div>
     </div>
 
-    <h2>Select a state to drill down</h2>
-    <div class="state-grid">
-        {% for state in state_tiles %}
-            <a href="{% url 'meeting_state_target' state.name %}" style="text-decoration: none; color: inherit;">
-                <div class="state-tile">
-                    <div class="tile-label">{{ state.name }}</div>
-                    <div class="tile-value">{{ state.percent }}%</div>
-                </div>
-            </a>
-        {% empty %}
-            <p>No targeted parties found for this fiscal year.</p>
-        {% endfor %}
-    </div>
-
     <script>
-        const trendChart = new Chart(document.getElementById('trendChart'), {
+        new Chart(document.getElementById('trendChart'), {
             type: 'line',
             data: {
                 labels: {{ month_labels|safe }},
