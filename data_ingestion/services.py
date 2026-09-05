@@ -138,4 +138,37 @@ def save_mou(mou_df, fiscal_year):
             rows_saved += 1
 
         return rows_saved, mismatch_notes
-    
+
+
+def reconcile(fiscal_year, tolerance=1):
+    """
+    Compares Invoice.basic_amount summed by Party+Month against MOU's
+    monthly achievement figure for that party, for the given fiscal_year.
+    Returns a list of mismatch note strings (empty list = fully reconciled).
+    """
+    from django.db.models import Sum
+    from core.models import MOU, Invoice
+
+    notes = []
+    month_num_to_suffix = {
+        4: 'apr', 5: 'may', 6: 'jun', 7: 'jul', 8: 'aug', 9: 'sep',
+        10: 'oct', 11: 'nov', 12: 'dec', 1: 'jan', 2: 'feb', 3: 'mar',
+    }
+
+    mous = MOU.objects.filter(fiscal_year=fiscal_year).select_related('party')
+
+    for mou in mous:
+        for month_num, suffix in month_num_to_suffix.items():
+            invoice_sum = Invoice.objects.filter(
+                party=mou.party, fiscal_year=fiscal_year, month=month_num
+            ).aggregate(total=Sum('basic_amount'))['total'] or 0
+
+            mou_achievement = getattr(mou, f'achievement_{suffix}') or 0
+
+            if abs(invoice_sum - mou_achievement) > tolerance:
+                notes.append(
+                    f"{mou.party.name} - month {month_num}: Invoice sum ({invoice_sum}) "
+                    f"vs MOU achievement ({mou_achievement}) - mismatch of {invoice_sum - mou_achievement}."
+                )
+
+    return notes

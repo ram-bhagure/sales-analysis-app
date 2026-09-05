@@ -2,7 +2,7 @@ import pandas as pd
 from django.shortcuts import render
 from .forms import WorkbookUploadForm
 from .models import UploadHistory
-from .services import get_fiscal_year, save_invoices, save_mou
+from .services import get_fiscal_year, save_invoices, save_mou, reconcile
 
 
 def upload_workbook(request):
@@ -22,6 +22,8 @@ def upload_workbook(request):
 
                 invoice_rows_saved = save_invoices(invoice_df, fiscal_year)
                 mou_rows_saved, mismatch_notes = save_mou(mou_df, fiscal_year)
+                reconciliation_notes = reconcile(fiscal_year)
+                mismatch_notes = mismatch_notes + reconciliation_notes
 
                 status = 'partial' if mismatch_notes else 'success'
 
