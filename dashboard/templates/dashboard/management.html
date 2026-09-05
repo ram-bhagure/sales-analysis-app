@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Management Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .tiles { display: flex; gap: 20px; }
+        .tile { border: 1px solid #ccc; border-radius: 8px; padding: 16px; min-width: 180px; }
+        .tile-label { font-size: 13px; color: #666; }
+        .tile-value { font-size: 26px; font-weight: bold; margin-top: 6px; }
+    </style>
+</head>
+<body>
+    <h1>Management Dashboard</h1>
+    <p>Fiscal Year: {{ fiscal_year }}</p>
+
+    <div class="tiles">
+        <div class="tile">
+            <div class="tile-label">Total Target</div>
+            <div class="tile-value">₹{{ total_target|floatformat:0 }}</div>
+        </div>
+        <div class="tile">
+            <div class="tile-label">Total Achievement</div>
+            <div class="tile-value">₹{{ total_achievement|floatformat:0 }}</div>
+        </div>
+        <div class="tile">
+            <div class="tile-label">Achieved</div>
+            <div class="tile-value">{{ percent_achieved }}%</div>
+        </div>
+    </div>
+</body>
+</html>
