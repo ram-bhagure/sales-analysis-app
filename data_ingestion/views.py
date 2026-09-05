@@ -5,6 +5,10 @@ from .models import UploadHistory
 from .services import get_fiscal_year, save_invoices, save_mou, reconcile
 
 
+from accounts.permissions import role_required
+
+
+@role_required('admin', 'sales_head')
 def upload_workbook(request):
     result = None
     error = None
