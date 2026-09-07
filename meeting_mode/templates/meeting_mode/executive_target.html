@@ -58,7 +58,7 @@
         <canvas id="partiesChart"></canvas>
     </div>
 
-    <h2>Party detail</h2>
+    <h2>Party detail (click a row for the full report)</h2>
     <table>
         <thead>
             <tr>
@@ -71,7 +71,7 @@
         </thead>
         <tbody>
             {% for row in party_rows %}
-                <tr>
+                <tr style="cursor: pointer;" onclick="window.location.href='{% url 'party_report' row.name fiscal_year %}'">
                     <td>{{ row.name }}</td>
                     <td>{{ row.city }}</td>
                     <td>₹{{ row.target|floatformat:0 }}</td>
@@ -127,7 +127,17 @@
                     }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const partyNames = {{ party_names|safe }};
+                        const clickedName = partyNames[elements[0].index];
+                        window.location.href = '/reports/party/' + encodeURIComponent(clickedName) + '/{{ fiscal_year }}/';
+                    }
+                },
+                onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+            }
         });
     </script>
 </body>

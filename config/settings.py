@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'data_ingestion',
     'accounts',
     'dashboard',
-    'meeting_mode'
+    'meeting_mode',
+    'reports'
 ]
 
 MIDDLEWARE = [
