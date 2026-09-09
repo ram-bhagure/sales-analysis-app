@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Welcome</h1>
+    <p>Choose how you want to view the sales data.</p>
+
+    <div style="display: flex; gap: 24px; margin-top: 30px; flex-wrap: wrap;">
+        <a href="{% url 'management_dashboard' %}" style="text-decoration: none; color: inherit; flex: 1; min-width: 280px;">
+            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 30px; background: white; height: 100%;">
+                <h2 style="margin-top: 0;">Management Dashboard</h2>
+                <p style="color: #555;">Full, unrestricted view of all data for ongoing analysis and admin reporting.</p>
+            </div>
+        </a>
+        <a href="{% url 'meeting_all_india_target' %}" style="text-decoration: none; color: inherit; flex: 1; min-width: 280px;">
+            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 30px; background: white; height: 100%;">
+                <h2 style="margin-top: 0;">Meeting Mode</h2>
+                <p style="color: #555;">Region-safe drill-down view designed for live review meetings, starting from an All-India summary.</p>
+            </div>
+        </a>
+    </div>
+{% endblock %}

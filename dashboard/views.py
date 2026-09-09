@@ -23,6 +23,10 @@ def management_dashboard(request):
         party__in=parties, fiscal_year=fiscal_year
     ).aggregate(total=Sum('basic_amount'))['total'] or 0
 
+    total_units = Invoice.objects.filter(
+        party__in=parties, fiscal_year=fiscal_year
+    ).aggregate(total=Sum('units'))['total'] or 0
+
     percent_achieved = round((total_achievement / total_target) * 100, 1) if total_target else 0
 
     # Monthly trend: sum target_<month> across all MOUs, and actual invoice sum per month
@@ -37,25 +41,37 @@ def management_dashboard(request):
         ).aggregate(total=Sum('basic_amount'))['total'] or 0
         monthly_achievement.append(float(invoice_sum))
 
+    # Monthly units (parallel to monthly_achievement, for tooltips)
+    monthly_units = []
+    for month_num in MONTH_NUMBERS:
+        u = Invoice.objects.filter(
+            party__in=parties, fiscal_year=fiscal_year, month=month_num
+        ).aggregate(total=Sum('units'))['total'] or 0
+        monthly_units.append(float(u))
+
     # Product mix: sum basic_amount grouped by product name
     product_totals = (
         Invoice.objects.filter(party__in=parties, fiscal_year=fiscal_year)
         .values('product__name')
-        .annotate(total=Sum('basic_amount'))
+        .annotate(total=Sum('basic_amount'), total_units=Sum('units'))
         .order_by('-total')
     )
     product_labels = [row['product__name'] for row in product_totals]
     product_values = [float(row['total']) for row in product_totals]
+    product_units = [float(row['total_units'] or 0) for row in product_totals]
 
     context = {
         'fiscal_year': fiscal_year,
         'total_target': total_target,
         'total_achievement': total_achievement,
+        'total_units': total_units,
         'percent_achieved': percent_achieved,
         'month_labels': MONTH_LABELS,
         'monthly_target': monthly_target,
         'monthly_achievement': monthly_achievement,
+        'monthly_units': monthly_units,
         'product_labels': product_labels,
         'product_values': product_values,
+        'product_units': product_units,
     }
     return render(request, 'dashboard/management.html', context)

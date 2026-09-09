@@ -26,4 +26,5 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('meeting/', include('meeting_mode.urls')),
     path('reports/', include('reports.urls')),
+    path('', include('home.urls')),
 ]

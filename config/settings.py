@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'accounts',
     'dashboard',
     'meeting_mode',
-    'reports'
+    'reports',
+    'home'
 ]
 
 MIDDLEWARE = [
@@ -60,7 +61,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR/ 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,5 +128,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = '/data/upload/'   # temporary - we'll point this to the dashboard once it exists
+LOGIN_REDIRECT_URL = '/'   # temporary - we'll point this to the dashboard once it exists
 LOGIN_URL = '/login/'
