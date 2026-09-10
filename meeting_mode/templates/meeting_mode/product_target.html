@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ product_name }}{% endblock %}
+
+{% block content %}
+    <button class="back-btn" onclick="history.back()">&larr; Back</button>
+    <div class="page-header">
+        <h1>{{ product_name }} <span style="font-size:16px; color:#666; font-weight:normal;">&middot; {{ scope_label }}</span></h1>
+        <div class="fy-badge">FY {{ fiscal_year }}</div>
+    </div>
+    <p style="color:#666;">Product-level view &mdash; no target exists below Party level, so this shows Sales/Achievement only.</p>
+
+    <div class="tiles">
+        <div class="tile">
+            <div class="tile-label">Sales (Achievement)</div>
+            <div class="tile-value">₹{{ total_achievement|floatformat:0 }}</div>
+        </div>
+        <div class="tile">
+            <div class="tile-label">Bundles (Units)</div>
+            <div class="tile-value">{{ total_units|floatformat:0 }}</div>
+        </div>
+    </div>
+
+    <div class="chart-row">
+        <div>
+            <h2>Monthly Sales Trend</h2>
+            <div class="chart-container chart-container-row">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-col-small">
+            <h2>Subproduct Mix</h2>
+            <div class="chart-container chart-container-row">
+                <canvas id="subproductChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <h2>Subproducts</h2>
+    <table class="data-table">
+        <thead>
+            <tr><th>Subproduct</th><th>Units</th><th>Sales Value</th><th>% of Total</th></tr>
+        </thead>
+        <tbody>
+            {% for row in subproduct_table %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.units|floatformat:0 }}</td>
+                    <td>₹{{ row.value|floatformat:0 }}</td>
+                    <td>{{ row.pct }}%</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">No sales recorded for this product.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthlyUnits = {{ monthly_units|safe }};
+    new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+            labels: {{ month_labels|safe }},
+            datasets: [{ label: 'Sales', data: {{ monthly_sales|safe }}, borderColor: '#2a78d6', backgroundColor: 'rgba(42,120,214,0.1)', fill: true, borderWidth: 2, pointRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Sales: ₹' + context.parsed.y.toLocaleString() + ' | Bundles: ' + monthlyUnits[context.dataIndex].toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const subproductUnits = {{ subproduct_units|safe }};
+    new Chart(document.getElementById('subproductChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ subproduct_labels|safe }},
+            datasets: [{ data: {{ subproduct_values|safe }}, backgroundColor: ['#2a78d6', '#5aa3e8', '#a8cef2', '#d8e8fa', '#f0c987'] }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total ? ((value / total) * 100).toFixed(1) : 0;
+                            const units = subproductUnits[context.dataIndex];
+                            return context.label + ': ₹' + value.toLocaleString() + ' (' + pct + '%) | Bundles: ' + units.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

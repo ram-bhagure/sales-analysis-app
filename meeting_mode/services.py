@@ -121,3 +121,39 @@ def product_monthly_trend(parties_qs, fiscal_year, top_n=5):
             'color': PRODUCT_TREND_COLORS[i % len(PRODUCT_TREND_COLORS)],
         })
     return series
+
+def product_total(parties_qs, fiscal_year, product_name):
+    return Invoice.objects.filter(
+        party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name
+    ).aggregate(total=Sum('basic_amount'))['total'] or 0
+
+
+def product_units_total(parties_qs, fiscal_year, product_name):
+    return Invoice.objects.filter(
+        party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name
+    ).aggregate(total=Sum('units'))['total'] or 0
+
+
+def single_product_monthly_trend(parties_qs, fiscal_year, product_name):
+    """12-month sales + units trend for one specific product."""
+    values, units = [], []
+    for month_num in MONTH_NUMBERS:
+        row = Invoice.objects.filter(
+            party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name, month=month_num
+        ).aggregate(total=Sum('basic_amount'), total_units=Sum('units'))
+        values.append(float(row['total'] or 0))
+        units.append(float(row['total_units'] or 0))
+    return values, units
+
+
+def subproduct_mix(parties_qs, fiscal_year, product_name):
+    """Breaks one product down into its subproducts: (labels, values, units)."""
+    rows = Invoice.objects.filter(
+        party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name
+    ).values('subproduct__name').annotate(
+        total=Sum('basic_amount'), total_units=Sum('units')
+    ).order_by('-total')
+    labels = [row['subproduct__name'] or 'Unspecified' for row in rows]
+    values = [float(row['total']) for row in rows]
+    units = [float(row['total_units'] or 0) for row in rows]
+    return labels, values, units

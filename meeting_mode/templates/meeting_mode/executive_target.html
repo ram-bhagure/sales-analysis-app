@@ -145,7 +145,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-            }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const productLabels = {{ product_labels|safe }};
+                    const name = productLabels[elements[0].index];
+                    window.location.href = '/meeting/target/product/' + encodeURIComponent(name) + '/?executive=' + encodeURIComponent('{{ executive_name }}');
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
         }
     });
 

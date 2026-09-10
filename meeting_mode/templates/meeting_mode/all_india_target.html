@@ -59,6 +59,19 @@
     {{ product_series|json_script:"product-series-data" }}
 
     <h2>Select a state to drill down</h2>
+    <h2>States &mdash; by Achievement</h2>
+    <div class="chart-row">
+        <div>
+            <div class="chart-container chart-container-row">
+                <canvas id="stateBarChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-col-small">
+            <div class="chart-container chart-container-row">
+                <canvas id="stateDonutChart"></canvas>
+            </div>
+        </div>
+    </div>
     <div class="state-grid">
         {% for state in state_tiles %}
             <a href="{% url 'meeting_state_target' state.name %}" style="text-decoration: none; color: inherit;">
@@ -72,6 +85,8 @@
         {% endfor %}
     </div>
 {% endblock %}
+
+
 
 {% block extra_head %}
 <script>
@@ -132,7 +147,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-            }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const productLabels = {{ product_labels|safe }};
+                    const name = productLabels[elements[0].index];
+                    window.location.href = '/meeting/target/product/' + encodeURIComponent(name) + '/';
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
         }
     });
     const productSeries = JSON.parse(document.getElementById('product-series-data').textContent);
@@ -154,6 +177,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+        }
+    });
+
+    const stateUnits = {{ state_units|safe }};
+    new Chart(document.getElementById('stateBarChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ state_names|safe }},
+            datasets: [{ label: 'Achievement', data: {{ state_achievements|safe }}, backgroundColor: '#2a78d6' }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: (c) => '₹' + c.parsed.y.toLocaleString() + ' | Bundles: ' + stateUnits[c.dataIndex].toLocaleString() } } },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const names = {{ state_names|safe }};
+                    window.location.href = '/meeting/target/state/' + encodeURIComponent(names[elements[0].index]) + '/';
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+        }
+    });
+    new Chart(document.getElementById('stateDonutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ state_names|safe }},
+            datasets: [{ data: {{ state_achievements|safe }}, backgroundColor: ['#2a78d6', '#5aa3e8', '#a8cef2', '#d8e8fa', '#f0c987'] }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: function(c) {
+                const total = c.dataset.data.reduce((a,b)=>a+b,0);
+                const pct = total ? ((c.parsed/total)*100).toFixed(1) : 0;
+                return c.label + ': ' + pct + '% | Bundles: ' + stateUnits[c.dataIndex].toLocaleString();
+            } } } }
         }
     });
 });

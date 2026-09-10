@@ -8,6 +8,7 @@ from .services import (
     MONTH_LABELS, MONTH_NUMBERS, parse_selected_month,
     target_total, achievement_total, units_total, percent_achieved,
     monthly_trend, monthly_units_trend, product_mix, product_monthly_trend,
+    product_total, product_units_total, single_product_monthly_trend, subproduct_mix,
 )
 
 
@@ -34,7 +35,16 @@ def all_india_target(request):
         state_parties = targeted_parties.filter(state=state_name)
         s_target = target_total(state_parties, fiscal_year, selected_month)
         s_achievement = achievement_total(state_parties, fiscal_year, selected_month)
-        state_tiles.append({'name': state_name, 'percent': percent_achieved(s_target, s_achievement)})
+        s_units = units_total(state_parties, fiscal_year, selected_month)
+        state_tiles.append({
+            'name': state_name,
+            'percent': percent_achieved(s_target, s_achievement),
+            'achievement': float(s_achievement),
+            'units': float(s_units),
+        })
+    state_tiles.sort(key=lambda t: t['achievement'], reverse=True)
+
+    
 
     context = {
         'fiscal_year': fiscal_year,
@@ -50,6 +60,9 @@ def all_india_target(request):
         'selected_month': selected_month,
         'selected_month_label': selected_month_label,
         'state_tiles': state_tiles,
+        'state_names': [t['name'] for t in state_tiles],
+        'state_achievements': [t['achievement'] for t in state_tiles],
+        'state_units': [t['units'] for t in state_tiles],
         'product_labels': product_labels,
         'product_values': product_values,
         'product_units': product_units,
@@ -81,7 +94,14 @@ def state_target(request, state_name):
         exec_parties = targeted_parties.filter(executive__name=exec_name)
         e_target = target_total(exec_parties, fiscal_year, selected_month)
         e_achievement = achievement_total(exec_parties, fiscal_year, selected_month)
-        executive_tiles.append({'name': exec_name, 'percent': percent_achieved(e_target, e_achievement)})
+        e_units = units_total(exec_parties, fiscal_year, selected_month)
+        executive_tiles.append({
+            'name': exec_name,
+            'percent': percent_achieved(e_target, e_achievement),
+            'achievement': float(e_achievement),
+            'units': float(e_units),
+        })
+    executive_tiles.sort(key=lambda t: t['achievement'], reverse=True)
 
     context = {
         'state_name': state_name,
@@ -98,6 +118,9 @@ def state_target(request, state_name):
         'selected_month': selected_month,
         'selected_month_label': selected_month_label,
         'executive_tiles': executive_tiles,
+        'executive_names': [t['name'] for t in executive_tiles],
+        'executive_achievements': [t['achievement'] for t in executive_tiles],
+        'executive_units': [t['units'] for t in executive_tiles],
         'product_labels': product_labels,
         'product_values': product_values,
         'product_units': product_units,
@@ -164,3 +187,49 @@ def executive_target(request, executive_name):
         'party_units': [r['units'] for r in party_rows],
     }
     return render(request, 'meeting_mode/executive_target.html', context)
+
+
+@login_required
+def product_target(request, product_name):
+    """Product-level page - no Target (doesn't exist below Party level), just
+    Sales/Achievement + subproduct breakdown. Scope inherited via ?state= or ?executive=."""
+    fiscal_year = get_fiscal_year(date.today())
+    accessible_parties = get_accessible_parties(request.user)
+    targeted_parties = accessible_parties.filter(mou__fiscal_year=fiscal_year)
+
+    state_name = request.GET.get('state')
+    executive_name = request.GET.get('executive')
+    if state_name:
+        targeted_parties = targeted_parties.filter(state=state_name)
+        scope_label = state_name
+    elif executive_name:
+        targeted_parties = targeted_parties.filter(executive__name=executive_name)
+        scope_label = executive_name
+    else:
+        scope_label = "All India"
+
+    total_achievement = product_total(targeted_parties, fiscal_year, product_name)
+    total_units = product_units_total(targeted_parties, fiscal_year, product_name)
+    monthly_sales, monthly_units = single_product_monthly_trend(targeted_parties, fiscal_year, product_name)
+    subproduct_labels, subproduct_values, subproduct_units = subproduct_mix(targeted_parties, fiscal_year, product_name)
+
+    subproduct_table = []
+    for label, value, units_val in zip(subproduct_labels, subproduct_values, subproduct_units):
+        pct = round((value / float(total_achievement)) * 100, 1) if total_achievement else 0
+        subproduct_table.append({'name': label, 'value': value, 'units': units_val, 'pct': pct})
+
+    context = {
+        'product_name': product_name,
+        'scope_label': scope_label,
+        'fiscal_year': fiscal_year,
+        'total_achievement': total_achievement,
+        'total_units': total_units,
+        'month_labels': MONTH_LABELS,
+        'monthly_sales': monthly_sales,
+        'monthly_units': monthly_units,
+        'subproduct_labels': subproduct_labels,
+        'subproduct_values': subproduct_values,
+        'subproduct_units': subproduct_units,
+        'subproduct_table': subproduct_table,
+    }
+    return render(request, 'meeting_mode/product_target.html', context)

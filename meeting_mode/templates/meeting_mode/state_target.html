@@ -7,7 +7,7 @@
     </div>     -->
     <div class="page-header">
         <button class="back-btn" onclick="history.back()">&larr; Back</button>
-        <!-- <p><a href="{% url 'meeting_all_india_target' %}">&larr; All India</a></p> -->
+        <p><a href="{% url 'meeting_all_india_target' %}">&larr; All India</a></p>
         <h1>Meeting Mode &mdash; {{ state_name }}</h1>
         <div class="fy-badge">FY {{ fiscal_year }}</div>
     </div>
@@ -55,7 +55,20 @@
         <canvas id="productTrendChart"></canvas>
     </div>
     
-        <h2>Select an executive to drill down</h2>
+    <h2>Select an executive to drill down</h2>
+    <h2>States &mdash; by Achievement</h2>
+    <div class="chart-row">
+        <div>
+            <div class="chart-container chart-container-row">
+                <canvas id="executiveBarChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-col-small">
+            <div class="chart-container chart-container-row">
+                <canvas id="executiveDonutChart"></canvas>
+            </div>
+        </div>
+    </div>
     <div class="state-grid">
         {% for exec in executive_tiles %}
             <a href="{% url 'meeting_executive_target' exec.name %}" style="text-decoration: none; color: inherit;">
@@ -131,7 +144,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-            }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const productLabels = {{ product_labels|safe }};
+                    const name = productLabels[elements[0].index];
+                    window.location.href = '/meeting/target/product/' + encodeURIComponent(name) + '/?state=' + encodeURIComponent('{{ state_name }}');
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
         }
     });
 
@@ -154,6 +175,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+        }
+    });
+
+    const stateUnits = {{ executive_units|safe }};
+    new Chart(document.getElementById('executiveBarChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ executive_names|safe }},
+            datasets: [{ label: 'Achievement', data: {{ executive_achievements|safe }}, backgroundColor: '#2a78d6' }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: (c) => '₹' + c.parsed.y.toLocaleString() + ' | Bundles: ' + stateUnits[c.dataIndex].toLocaleString() } } },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const names = {{ executive_names|safe }};
+                    window.location.href = '/meeting/target/executive/' + encodeURIComponent(names[elements[0].index]) + '/';
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+        }
+    });
+    new Chart(document.getElementById('executiveDonutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ executive_names|safe }},
+            datasets: [{ data: {{ executive_achievements|safe }}, backgroundColor: ['#2a78d6', '#5aa3e8', '#a8cef2', '#d8e8fa', '#f0c987'] }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: function(c) {
+                const total = c.dataset.data.reduce((a,b)=>a+b,0);
+                const pct = total ? ((c.parsed/total)*100).toFixed(1) : 0;
+                return c.label + ': ' + pct + '% | Bundles: ' + stateUnits[c.dataIndex].toLocaleString();
+            } } } }
         }
     });
 });
