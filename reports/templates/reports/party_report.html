@@ -17,9 +17,12 @@
             background: white;
             box-shadow: 0 0 8px rgba(0,0,0,0.15);
         } */ */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a3a5c; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0px; flex-wrap: wrap; gap: 10px; }
+        .page-header h1 {margin: 0; }
+        .fy-badge { background: #1a3a5c; align-items: end; color: white; padding: 10px 14px; border-radius: 4px; font-weight: bold; font-size: 14px; white-space: nowrap; }
+        /* .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a3a5c; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
         .header h1 { color: #1a3a5c; margin: 0; font-size: 24px; }
-        .fy-badge { background: #1a3a5c; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+        .fy-badge { background: #1a3a5c; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; white-space: nowrap;} */
         .meta { display: flex; justify-content: space-between; margin: 10px 0 20px; font-size: 14px; flex-wrap: wrap; gap: 10px; }
         .quarter-block { margin-bottom: 20px; }
         .quarter-title { font-weight: bold; text-align: center; margin-bottom: 8px; }
@@ -88,11 +91,11 @@
 
 <body>
     <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
-    <div class="page" id="page1">
+    <!-- <div class="page" id="page1"> -->
     <div class="header">
         <h1>SALES REPORT</h1>
         <div class="fy-badge">FY {{ fiscal_year }}</div>
-    </div>
+    <!-- </div> -->
     <p style="text-align:center; margin-top:0; color:#555;">Distributor Performance Scorecard</p>
 
     <div class="meta">

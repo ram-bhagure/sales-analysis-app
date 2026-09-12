@@ -7,7 +7,7 @@
     </div>     -->
     <div class="page-header">
         <button class="back-btn" onclick="history.back()">&larr; Back</button>
-        <p><a href="{% url 'meeting_all_india_target' %}">&larr; All India</a></p>
+        <!-- <p><a href="{% url 'meeting_all_india_target' %}">&larr; All India</a></p> -->
         <h1>Meeting Mode &mdash; {{ state_name }}</h1>
         <div class="fy-badge">FY {{ fiscal_year }}</div>
     </div>
@@ -42,29 +42,43 @@
                 <canvas id="trendChart"></canvas>
             </div>
         </div>
-        <div class="chart-col-small">
+        <div>
+            <h2>Product-wise Monthly Trend (top 5 products)</h2>
+            <div class="chart-container chart-container-row">
+                <canvas id="productTrendChart"></canvas>
+            </div>
+        </div>
+        <!-- <div class="chart-col-small">
             <h2>Product Mix</h2>
             <div class="chart-container chart-container-row">
                 <canvas id="productChart"></canvas>
             </div>
-        </div>
+        </div> -->
     </div>
 
-    <h2>Product-wise Monthly Trend (top 5 products)</h2>
+    <!-- <h2>Product-wise Monthly Trend (top 5 products)</h2>
     <div class="chart-container chart-container-full">
         <canvas id="productTrendChart"></canvas>
-    </div>
+    </div> -->
     
-    <h2>Select an executive to drill down</h2>
-    <h2>States &mdash; by Achievement</h2>
+    <!-- <h2>Select an executive to drill down</h2> -->
+    <!-- <h2>States &mdash; by Achievement</h2> -->
     <div class="chart-row">
+        <div class="chart-col-small">
+            <h2>Product Mix</h2>
+            <div class="chart-container chart-container-full">
+                <canvas id="productChart"></canvas>
+            </div>
+        </div>
         <div>
-            <div class="chart-container chart-container-row">
+            <h2>States &mdash; by Achievement</h2>
+            <div class="chart-container chart-container-full">
                 <canvas id="executiveBarChart"></canvas>
             </div>
         </div>
         <div class="chart-col-small">
-            <div class="chart-container chart-container-row">
+            <h2>Executive Contribution</h2>
+            <div class="chart-container chart-container-full">
                 <canvas id="executiveDonutChart"></canvas>
             </div>
         </div>
@@ -74,7 +88,8 @@
             <a href="{% url 'meeting_executive_target' exec.name %}" style="text-decoration: none; color: inherit;">
                 <div class="state-tile">
                     <div class="tile-label">{{ exec.name }}</div>
-                    <div class="tile-value">{{ exec.percent }}%</div>
+                    <div class="tile-value">{{ exec.achievement }}</div>
+                    <div style = "font-size: 13px; color: #666; margin-top: 4px;">{{exec.contribution_pct}}% of total sales</div>
                 </div>
             </a>
         {% empty %}

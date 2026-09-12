@@ -39,24 +39,28 @@
                 <canvas id="trendChart"></canvas>
             </div>
         </div>
-        <div class="chart-col-small">
-            <h2>Product Mix</h2>
+        <div>
+            <h2>Product-wise Monthly Trend (top 5 products)</h2>
             <div class="chart-container chart-container-row">
-                <canvas id="productChart"></canvas>
+                <canvas id="productTrendChart"></canvas>
             </div>
         </div>
     </div>
 
-    <h2>Product-wise Monthly Trend (top 5 products)</h2>
-    <div class="chart-container chart-container-full">
-        <canvas id="productTrendChart"></canvas>
+    <div class="chart-row">
+        <div class="chart-col-small">
+            <h2>Product Mix</h2>
+            <div class="chart-container chart-container-full">
+                <canvas id="productChart"></canvas>
+            </div>
+        </div>
+        <div>
+            <h2>Parties &mdash; sorted by % achieved</h2>
+            <div class="chart-container chart-container-full">
+                <canvas id="partiesChart"></canvas>
+            </div>
+        </div>
     </div>
-
-    <h2>Parties &mdash; sorted by % achieved</h2>
-    <div class="chart-container chart-container-full">
-        <canvas id="partiesChart"></canvas>
-    </div>
-
     <h2>Party detail (click a row for the full report)</h2>
     <table class="data-table">
         <thead>

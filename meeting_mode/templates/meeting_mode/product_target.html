@@ -2,13 +2,15 @@
 {% block title %}{{ product_name }}{% endblock %}
 
 {% block content %}
-    <button class="back-btn" onclick="history.back()">&larr; Back</button>
     <div class="page-header">
+        <button class="back-btn" onclick="history.back()">&larr; Back</button>
         <h1>{{ product_name }} <span style="font-size:16px; color:#666; font-weight:normal;">&middot; {{ scope_label }}</span></h1>
         <div class="fy-badge">FY {{ fiscal_year }}</div>
     </div>
     <p style="color:#666;">Product-level view &mdash; no target exists below Party level, so this shows Sales/Achievement only.</p>
-
+    {% if selected_month_label %}
+        <p>Filtered to: <strong>{{ selected_month_label }}</strong> &middot; <a href="?{% if state_param %}state={{ state_param }}{% elif executive_param %}executive={{ executive_param }}{% endif %}">Clear filter</a></p>
+    {% endif %}
     <div class="tiles">
         <div class="tile">
             <div class="tile-label">Sales (Achievement)</div>
@@ -31,6 +33,28 @@
             <h2>Subproduct Mix</h2>
             <div class="chart-container chart-container-row">
                 <canvas id="subproductChart"></canvas>
+            </div>
+        </div>
+
+        <div>
+            <h2>{{ breakdown_level_label }} &mdash; by Sales</h2>
+            <div class="chart-container chart-container-row">
+                <canvas id="breakdownBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- <h2>{{ breakdown_level_label }} &mdash; by Sales</h2> -->
+    <div class="chart-row">
+        <div>
+            <h2>Subproduct Monthly Trend</h2>
+            <div class="chart-container chart-container-row">
+                <canvas id="subproductTrendChart"></canvas>
+            </div>
+            {{ subproduct_series|json_script:"subproduct-series-data" }}
+        </div>
+        <div class="chart-col-small">
+            <div class="chart-container chart-container-row">
+                <canvas id="breakdownDonutChart"></canvas>
             </div>
         </div>
     </div>
@@ -75,7 +99,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
-            }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const monthNumbers = {{ month_numbers|safe }};
+                    const monthNum = monthNumbers[elements[0].index];
+                    let url = '?month=' + monthNum;
+                    {% if state_param %}url += '&state={{ state_param }}';{% endif %}
+                    {% if executive_param %}url += '&executive={{ executive_param }}';{% endif %}
+                    window.location.href = url;
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
         }
     });
 
@@ -101,6 +136,78 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+        }
+    });
+    const breakdownUnits = {{ breakdown_units|safe }};
+    new Chart(document.getElementById('breakdownBarChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ breakdown_labels|safe }},
+            datasets: [{ label: 'Sales', data: {{ breakdown_values|safe }}, backgroundColor: '#2a78d6' }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: (c) => '₹' + c.parsed.y.toLocaleString() + ' | Bundles: ' + breakdownUnits[c.dataIndex].toLocaleString() } } },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const labels = {{ breakdown_labels|safe }};
+                    const name = labels[elements[0].index];
+                    {% if breakdown_is_party %}
+                    window.location.href = '{{ breakdown_url_base }}' + encodeURIComponent(name) + '/{{ fiscal_year }}/';
+                    {% else %}
+                    window.location.href = '{{ breakdown_url_base }}' + encodeURIComponent(name) + '/';
+                    {% endif %}
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+        }
+    });
+    new Chart(document.getElementById('breakdownDonutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ breakdown_labels|safe }},
+            datasets: [{ data: {{ breakdown_values|safe }}, backgroundColor: ['#2a78d6', '#5aa3e8', '#a8cef2', '#d8e8fa', '#f0c987', '#e8a05a'] }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: function(c) {
+                const total = c.dataset.data.reduce((a,b)=>a+b,0);
+                const pct = total ? ((c.parsed/total)*100).toFixed(1) : 0;
+                return c.label + ': ' + pct + '% | Bundles: ' + breakdownUnits[c.dataIndex].toLocaleString();
+            } } } }
+        }
+    });
+
+    const subproductSeries = JSON.parse(document.getElementById('subproduct-series-data').textContent);
+    new Chart(document.getElementById('subproductTrendChart'), {
+        type: 'line',
+        data: {
+            labels: {{ month_labels|safe }},
+            datasets: subproductSeries.map(p => ({ label: p.name, data: p.data, borderColor: p.color, borderWidth: 2, pointRadius: 4, tension: 0.15 }))
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const units = subproductSeries[context.datasetIndex].units[context.dataIndex];
+                            return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString() + ' | Bundles: ' + units.toLocaleString();
+                        }
+                    }
+                }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const monthNumbers = {{ month_numbers|safe }};
+                    const monthNum = monthNumbers[elements[0].index];
+                    let url = '?month=' + monthNum;
+                    {% if state_param %}url += '&state={{ state_param }}';{% endif %}
+                    {% if executive_param %}url += '&executive={{ executive_param }}';{% endif %}
+                    window.location.href = url;
+                }
+            },
+            onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
         }
     });
 });

@@ -29,19 +29,22 @@ def target_total(parties_qs, fiscal_year, selected_month=None):
     ).aggregate(total=Sum('annual_target'))['total'] or 0
 
 
-def achievement_total(parties_qs, fiscal_year, selected_month=None):
+def achievement_total(parties_qs, fiscal_year, selected_month=None, product_name=None):
     """Sums Invoice.basic_amount for the given parties, optionally scoped to one month."""
     invoices = Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year)
     if selected_month:
         invoices = invoices.filter(month=selected_month)
+    if product_name:
+        invoices = invoices.filter(product__name=product_name)
     return invoices.aggregate(total=Sum('basic_amount'))['total'] or 0
 
 
-def units_total(parties_qs, fiscal_year, selected_month=None):
-    """Sums Invoice.units for the given parties, optionally scoped to one month."""
+def units_total(parties_qs, fiscal_year, selected_month=None, product_name=None):
     invoices = Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year)
     if selected_month:
         invoices = invoices.filter(month=selected_month)
+    if product_name:
+        invoices = invoices.filter(product__name=product_name)
     return invoices.aggregate(total=Sum('units'))['total'] or 0
 
 
@@ -58,6 +61,8 @@ def monthly_units_trend(parties_qs, fiscal_year):
 
 def percent_achieved(target, achievement):
     return round((achievement / target) * 100, 1) if target else 0
+
+
 
 
 def monthly_trend(parties_qs, fiscal_year):
@@ -122,16 +127,18 @@ def product_monthly_trend(parties_qs, fiscal_year, top_n=5):
         })
     return series
 
-def product_total(parties_qs, fiscal_year, product_name):
-    return Invoice.objects.filter(
-        party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name
-    ).aggregate(total=Sum('basic_amount'))['total'] or 0
+def product_total(parties_qs, fiscal_year, product_name, selected_month=None):
+    invoices = Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name)
+    if selected_month:
+        invoices = invoices.filter(month=selected_month)
+    return invoices.aggregate(total=Sum('basic_amount'))['total'] or 0
 
 
-def product_units_total(parties_qs, fiscal_year, product_name):
-    return Invoice.objects.filter(
-        party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name
-    ).aggregate(total=Sum('units'))['total'] or 0
+def product_units_total(parties_qs, fiscal_year, product_name, selected_month=None):
+    invoices = Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name)
+    if selected_month:
+        invoices = invoices.filter(month=selected_month)
+    return invoices.aggregate(total=Sum('units'))['total'] or 0
 
 
 def single_product_monthly_trend(parties_qs, fiscal_year, product_name):
@@ -146,14 +153,55 @@ def single_product_monthly_trend(parties_qs, fiscal_year, product_name):
     return values, units
 
 
-def subproduct_mix(parties_qs, fiscal_year, product_name):
-    """Breaks one product down into its subproducts: (labels, values, units)."""
-    rows = Invoice.objects.filter(
-        party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name
-    ).values('subproduct__name').annotate(
+def subproduct_mix(parties_qs, fiscal_year, product_name, selected_month=None):
+    invoices = Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name)
+    if selected_month:
+        invoices = invoices.filter(month=selected_month)
+    rows = invoices.values('subproduct__name').annotate(
         total=Sum('basic_amount'), total_units=Sum('units')
     ).order_by('-total')
     labels = [row['subproduct__name'] or 'Unspecified' for row in rows]
     values = [float(row['total']) for row in rows]
     units = [float(row['total_units'] or 0) for row in rows]
     return labels, values, units
+
+def product_breakdown_by_level(parties_qs, fiscal_year, product_name, group_field, selected_month=None):
+    invoices = Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name)
+    if selected_month:
+        invoices = invoices.filter(month=selected_month)
+    rows = invoices.values(group_field).annotate(
+        total=Sum('basic_amount'), total_units=Sum('units')
+    ).order_by('-total')
+    labels = [row[group_field] or 'Unknown' for row in rows]
+    values = [float(row['total']) for row in rows]
+    units = [float(row['total_units'] or 0) for row in rows]
+    return labels, values, units
+
+
+def subproduct_monthly_trend(parties_qs, fiscal_year, product_name, top_n=5):
+    """Like product_monthly_trend, but for the subproducts within one product."""
+    top_subs = (
+        Invoice.objects.filter(party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name)
+        .values('subproduct__name')
+        .annotate(total=Sum('basic_amount'))
+        .order_by('-total')[:top_n]
+    )
+    sub_names = [row['subproduct__name'] for row in top_subs if row['subproduct__name']]
+
+    series = []
+    for i, name in enumerate(sub_names):
+        monthly_values, monthly_units = [], []
+        for month_num in MONTH_NUMBERS:
+            row = Invoice.objects.filter(
+                party__in=parties_qs, fiscal_year=fiscal_year, product__name=product_name,
+                subproduct__name=name, month=month_num
+            ).aggregate(total=Sum('basic_amount'), total_units=Sum('units'))
+            monthly_values.append(float(row['total'] or 0))
+            monthly_units.append(float(row['total_units'] or 0))
+        series.append({
+            'name': name,
+            'data': monthly_values,
+            'units': monthly_units,
+            'color': PRODUCT_TREND_COLORS[i % len(PRODUCT_TREND_COLORS)],
+        })
+    return series
