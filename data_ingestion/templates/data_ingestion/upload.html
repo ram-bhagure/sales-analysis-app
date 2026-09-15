@@ -1,35 +1,64 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload Monthly Workbook</title>
-</head>
-<body>
-    <h1>Upload Monthly Workbook</h1>
+{% extends "base.html" %}
+{% block title %}Upload Monthly Workbook{% endblock %}
+
+{% block content %}
+    <div class="page-header">
+        <h1>Upload Monthly Workbook</h1>
+    </div>
+    <p style="color: #666;">Upload the single workbook containing both Invoice and MOU sheets. This replaces all existing data for the detected fiscal year.</p>
 
     {% if error %}
-        <p style="color: red;">Error: {{ error }}</p>
+        <div style="background: #fdecea; border: 1px solid #f5c2c0; color: #a12622; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px;">
+            <strong>Upload failed</strong>
+            <p style="margin: 6px 0 0;">{{ error }}</p>
+        </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Upload</button>
-    </form>
+    <div style="background: white; border: 1px solid #ddd; border-radius: 10px; padding: 30px; max-width: 500px;">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px;">{{ form.workbook.label }}</label>
+                {{ form.workbook }}
+                <p style="font-size: 13px; color: #888; margin-top: 6px;">{{ form.workbook.help_text }}</p>
+            </div>
+            <button type="submit" style="background: #1a3a5c; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-size: 15px; cursor: pointer;">
+                Upload
+            </button>
+        </form>
+    </div>
 
     {% if result %}
-        <h2>Upload successful</h2>
-        <p>Fiscal Year: {{ result.fiscal_year }}</p>
-        <p>Invoice rows saved: {{ result.invoice_rows_saved }}</p>
-        <p>MOU rows saved: {{ result.mou_rows_saved }}</p>
+        <div style="margin-top: 30px;">
+            <h2 style="color: #1a6e3c;">&#10003; Upload Successful</h2>
 
-        {% if result.mismatch_notes %}
-            <h3 style="color: darkorange;">Notes / Mismatches ({{ result.mismatch_notes|length }})</h3>
-            <ul>
-                {% for note in result.mismatch_notes %}
-                    <li>{{ note }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+            <div class="tiles" style="margin-top: 16px;">
+                <div class="tile">
+                    <div class="tile-label">Fiscal Year</div>
+                    <div class="tile-value" style="font-size: 20px;">{{ result.fiscal_year }}</div>
+                </div>
+                <div class="tile">
+                    <div class="tile-label">Invoice Rows Saved</div>
+                    <div class="tile-value">{{ result.invoice_rows_saved }}</div>
+                </div>
+                <div class="tile">
+                    <div class="tile-label">MOU Rows Saved</div>
+                    <div class="tile-value">{{ result.mou_rows_saved }}</div>
+                </div>
+            </div>
+
+            {% if result.mismatch_notes %}
+                <div style="background: #fff8e6; border: 1px solid #f0d896; border-radius: 8px; padding: 20px; margin-top: 24px; max-width: 800px;">
+                    <h3 style="margin-top: 0; color: #8a6d1a;">&#9888; Notes / Mismatches ({{ result.mismatch_notes|length }})</h3>
+                    <ul style="margin: 10px 0 0; padding-left: 20px;">
+                        {% for note in result.mismatch_notes %}
+                            <li style="margin-bottom: 6px; font-size: 14px;">{{ note }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <p style="color: #1a6e3c; margin-top: 16px;">No reconciliation issues found &mdash; all figures matched cleanly.</p>
+            {% endif %}
+        </div>
     {% endif %}
-</body>
-</html>
+{% endblock %}

@@ -75,13 +75,28 @@
         <div class="sb-content">
             <div>
                 <div class="sb-section-label">Views</div>
-                <a class="sb-link" href="{% url 'management_dashboard' %}">Management Dashboard</a>
+                <!-- <a class="sb-link" href="{% url 'home' %}">Home</a> -->
+                {% if request.user.profile.sees_all_data %}
+                    <a class="sb-link" href="{% url 'upload_workbook' %}">Upload Workbook</a>
+                    <a class="sb-link" href="{% url 'management_dashboard' %}">Management Dashboard</a>
+                {% endif %}
                 <a class="sb-link" href="{% url 'meeting_all_india_target' %}">Meeting Mode (Target Review)</a>
             </div>
             {% block sidebar_extra %}{% endblock %}
         </div>
-        <div style="margin-top: auto; font-size: 12px; color: #a9c2da;">
-            {% if request.user.is_authenticated %}{{ request.user.username }}{% endif %}
+        <div style="margin-top: auto;">
+            {% if request.user.is_staff %}
+                <a class="sb-link" href="/admin/">Admin</a>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                <div style="font-size: 12px; color: #a9c2da; margin-bottom: 10px;">{{ request.user.username }}</div>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="sb-link" style="background: rgba(255,255,255,0.08); width: 100%; border: none; text-align: left; cursor: pointer; font-family: inherit;">
+                        Log Out
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </div>
     <div id="main">

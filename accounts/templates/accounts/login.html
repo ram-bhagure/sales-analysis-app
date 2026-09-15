@@ -2,18 +2,57 @@
 <html>
 <head>
     <title>Login</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif; margin: 0; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #1a3a5c 0%, #2a5580 100%);
+        }
+        .login-card {
+            background: white; border-radius: 12px; padding: 40px 36px;
+            width: 100%; max-width: 380px; box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        }
+        .login-card h1 { margin: 0 0 4px; color: #1a3a5c; font-size: 24px; }
+        .login-card p.subtitle { margin: 0 0 28px; color: #777; font-size: 14px; }
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 13px; font-weight: bold; color: #444; margin-bottom: 6px; }
+        .field input {
+            width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
+        }
+        .field input:focus { outline: none; border-color: #2a78d6; }
+        button.submit-btn {
+            width: 100%; background: #1a3a5c; color: white; border: none;
+            padding: 12px; border-radius: 6px; font-size: 15px; cursor: pointer; margin-top: 6px;
+        }
+        button.submit-btn:hover { background: #24507d; }
+        .error-box {
+            background: #fdecea; border: 1px solid #f5c2c0; color: #a12622;
+            padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 18px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Login</h1>
+    <div class="login-card">
+        <h1>Sales Dashboard</h1>
+        <p class="subtitle">Sign in to continue</p>
 
-    {% if form.errors %}
-        <p style="color: red;">Invalid username or password.</p>
-    {% endif %}
+        {% if form.errors %}
+            <div class="error-box">Invalid username or password.</div>
+        {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Log in</button>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" autofocus>
+            </div>
+            <div class="field">
+                <label for="id_password">Password</label>
+                <input type="password" name="password" id="id_password">
+            </div>
+            <button type="submit" class="submit-btn">Log In</button>
+        </form>
+    </div>
 </body>
 </html>

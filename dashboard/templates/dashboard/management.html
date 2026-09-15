@@ -41,6 +41,12 @@
                 <canvas id="productChart"></canvas>
             </div>
         </div>
+        <div >
+            <h2> Executive</h2>
+            <div class="chart-container chart-container-full">
+                <canvas id = "executiveBarChart"></canvas>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
@@ -67,6 +73,27 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         options: { responsive: true, maintainAspectRatio: false }
     });
+
+    
+    // const stateUnits = {{ executive_units|safe }};
+    // new Chart(document.getElementById('executiveBarChart'), {
+    //     type: 'bar',
+    //     data: {
+    //         labels: {{ executive_names|safe }},
+    //         datasets: [{ label: 'Achievement', data: {{ executive_achievements|safe }}, backgroundColor: '#2a78d6' }]
+    //     }
+    //     // options: {
+    //     //     responsive: true, maintainAspectRatio: false,
+    //     //     plugins: { tooltip: { callbacks: { label: (c) => '₹' + c.parsed.y.toLocaleString() + ' | Bundles: ' + stateUnits[c.dataIndex].toLocaleString() } } },
+    //     //     // onClick: (event, elements) => {
+    //     //     //     if (elements.length > 0) {
+    //     //     //         const names = {{ executive_names|safe }};
+    //     //     //         // window.location.href = '/meeting/target/executive/' + encodeURIComponent(names[elements[0].index]) + '/';
+    //     //     //     }
+    //     //     // },
+    //     //     onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+    //     // }
+    // });
 });
 </script>
 {% endblock %}
